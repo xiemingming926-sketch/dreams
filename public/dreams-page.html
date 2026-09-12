@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bygone Dreams · Dream Archive</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/cormorant-garamond@5/500.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/cormorant-garamond@5/600-italic.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5/400.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5/600.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/pinyon-script@5/400.min.css" rel="stylesheet">
+<script>
+  /* 主题要在首屏前定好，避免闪一下 */
+  (function(){
+    try{
+      var t = localStorage.getItem("mg_theme");
+      document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+    }catch(e){}
+  })();
+</script>
+<style>
+/* ══════════════════════════════════════════════════════════
+   梦境 · 月球占星复古图纸
+   布局 9:16 · 无外部库 · 全部线条为 CSS/SVG + 一张月相雪碧图
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+
+:root{
+  --paper:#F3F1EB;
+  --ink:#3A473E;
+  --ink-soft:#6B7367;
+  --ink-faint:#9AA096;
+  --hair:rgba(58,71,62,.24);
+  --hair-mid:rgba(58,71,62,.40);
+  --glow:rgba(255,255,255,.95);
+  --panel:rgba(243,241,235,.94);
+  --bg-img:url("assets/bg-light.webp");
+  --moon-filter:none;
+  --orn-filter:brightness(.5) contrast(1.05);
+  --shadow:0 18px 50px rgba(60,70,58,.14);
+  --sheet-veil:rgba(243,241,235,.88);
+  --chip-bg:rgba(252,254,250,.55);
+}
+html[data-theme="dark"]{
+  --paper:#060709;
+  --ink:#EAE5D7;
+  --ink-soft:#A9AA9D;
+  --ink-faint:#6E7268;
+  --hair:rgba(234,229,215,.22);
+  --hair-mid:rgba(234,229,215,.42);
+  --glow:rgba(255,255,255,.14);
+  --panel:rgba(6,7,9,.94);
+  --bg-img:url("assets/bg-dark.webp");
+  --moon-filter:none;
+  --orn-filter:none;
+  --shadow:0 18px 50px rgba(0,0,0,.6);
+  --sheet-veil:rgba(7,8,10,.58);
+  --chip-bg:rgba(12,14,16,.48);
+}
+
+html{
+  /* 页面滚动只是环的转动输入：隐藏滚动条，收回它占掉的 15px，
+     否则内容中心比窗口中心偏左，月亮看起来“没居中” */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; display:none; }
+
+body{
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+html[data-theme="dark"] body{ background-color:#060709; }
+
+.en{ font-family: "Cormorant Garamond", Georgia, serif; }
+.sc{ font-family: "Pinyon Script", cursive; }
+
+/* ── 顶栏 / 底栏的细线 + 菱形 ── */
+.rail{
+  display:flex; align-items:center; gap:10px;
+  width:min(78%, 340px); margin:0 auto;
+}
+.rail i{ flex:1; height:1px; background:var(--hair); }
+.rail b{
+  width:7px; height:7px; flex:none; background:none;
+  border:1px solid var(--hair-mid); transform:rotate(45deg);
+}
+.kicker{
+  margin:10px 0 0; text-align:center;
+  font-family:"Cormorant Garamond", Georgia, serif;
+  font-size:11px; letter-spacing:.34em; text-transform:uppercase;
+  color: var(--ink-faint);
+}
+
+/* ── 主题切换 ── */
+.themebtn{
+  position:fixed; z-index:60;
+  top: calc(env(safe-area-inset-top) + 12px); right:14px;
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid var(--hair-mid); background:var(--panel);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+  color:var(--ink-soft); cursor:pointer; padding:0;
+  display:grid; place-items:center;
+  transition:transform .16s ease, color .18s ease;
+}
+.themebtn:active{ transform:scale(.9); }
+.themebtn svg{ width:15px; height:15px; display:block; }
+
+/* ══════════ 星际舞台 ══════════ */
+.hero{
+  position:sticky; top:0; z-index:0;
+  height:100vh;            /* 老引擎兜底 */
+  height:100svh;
+  min-height:560px;
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; justify-content:safe center;   /* 小屏内容超高时退回顶部对齐，标题不被裁 */
+  overflow:hidden;
+  background: var(--bg-img) center/cover no-repeat;
+  padding: calc(env(safe-area-inset-top) + 54px) 16px calc(env(safe-area-inset-bottom) + 18px);
+}
+.hero::after{      /* 四角轻微压暗，把视线收进中心 */
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: radial-gradient(120% 78% at 50% 44%, transparent 42%, var(--paper) 100%);
+  opacity:.55;
+}
+.stage{
+  position:relative; flex:none;
+  width:min(88vw, 400px); aspect-ratio:1;
+  perspective:1000px; perspective-origin:50% 46%;
+  --ring:0deg;
+  --sz: clamp(46px, 13.2vw, 58px);      /* 小月亮直径 */
+  --rad: clamp(112px, 33.5vw, 158px);   /* 轨道半径 */
+}
+
+/* 罗盘复用的 3D 环臂 / 环文字 */
+.arm, .ringtx{ position:absolute; top:50%; left:50%; transform-style:preserve-3d; pointer-events:none; z-index:1; }
+.arm svg{ display:block; }
+.ringtx span{
+  position:absolute; white-space:pre;
+  font-family:"Cormorant Garamond", Georgia, serif;
+}
+.tx-out{ color:var(--ink-soft); }
+.tx-in{ color:var(--ink-faint); }
+
+/* 中心月球 */
+.core{
+  position:absolute; top:50%; left:50%; z-index:3;
+  width:52%; aspect-ratio:1; margin:-26% 0 0 -26%;
+  border-radius:50%;
+  display:grid; place-items:center;
+  pointer-events:none;
+}
+.core::before{            /* 光晕 */
+  content:""; position:absolute; inset:-34%; border-radius:50%;
+  background: radial-gradient(circle, var(--glow) 0%, transparent 62%);
+  opacity:.5;
+}
+.core-img{
+  width:100%; height:100%; border-radius:50%;
+  background: url("assets/moon-center.webp") center/cover no-repeat;
+  filter: var(--moon-filter);
+  animation: mg-spin 240s linear infinite;
+  will-change: transform;
+  box-shadow: 0 0 0 1px var(--hair) inset;
+}
+@keyframes mg-spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+.core-face{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+
+/* 日期盘：悬在大月球正上方（顶部槽位处，那里的月相本来就渐隐，正好让位）。
+   底图 = 星盘 ditu.jpg + 主题蒙版（与弹窗同源），字用 Cormorant 斜体 */
+.date-chip{
+  position:absolute; z-index:6;
+  left:50%; top: calc(50% - var(--rad));
+  transform: translate(-50%, -50%);
+  display:inline-flex; align-items:center; gap:7px;
+  padding: 9px 18px; border-radius:999px;
+  border:1px solid var(--hair-mid);
+  background:
+    linear-gradient(180deg, var(--sheet-veil), var(--sheet-veil)),
+    url("assets/ditu.jpg") center/cover no-repeat;
+  -webkit-backdrop-filter: blur(12px) saturate(1.1); backdrop-filter: blur(12px) saturate(1.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,.16);
+  cursor:pointer;
+}
+.date-chip b{
+  font-family:"Cormorant Garamond", Georgia, serif;
+  font-weight:600; font-style:italic;
+  font-size: clamp(14px, 3.8vw, 16.5px); letter-spacing:.12em;
+  color: var(--ink); line-height:1; white-space:nowrap;
+}
+
+/* ── 自绘日历弹层：原生 date picker 是浏览器控件，CSS 够不着，只能自己画。
+   底图 = 星盘 ditu.jpg + 主题蒙版（与弹窗 / 日期盘同配方），字体与整页统一 ── */
+.cal-scrim{ position:absolute; inset:0; z-index:7; display:none; background:transparent; }
+.cal-scrim.on{ display:block; }
+.cal{
+  position:absolute; z-index:8;
+  left:50%; top:50%;
+  transform: translate(-50%,-50%) scale(.94);
+  width:min(76vw, 264px);
+  border-radius:18px; padding:14px 14px 11px;
+  border:1px solid var(--hair-mid);
+  background:
+    linear-gradient(180deg, var(--sheet-veil), var(--sheet-veil)),
+    url("assets/ditu.jpg") center/cover no-repeat;
+  -webkit-backdrop-filter: blur(16px) saturate(1.1); backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow: 0 18px 50px rgba(0,0,0,.30);
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition: opacity .22s ease, transform .26s cubic-bezier(.22,1,.36,1);
+}
+.cal.on{ opacity:1; visibility:visible; pointer-events:auto; transform: translate(-50%,-50%) scale(1); }
+.cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.cal-head b{
+  font-family:"Noto Serif SC","Songti SC",serif; font-weight:600;
+  font-size:13px; letter-spacing:.16em; color:var(--ink);
+}
+.cal-nav{
+  width:28px; height:28px; border-radius:50%;
+  border:1px solid var(--hair); background:none;
+  color:var(--ink-soft);
+  font:600 15px/1 "Cormorant Garamond", Georgia, serif;
+  cursor:pointer; display:grid; place-items:center;
+}
+.cal-nav:disabled{ opacity:.25; cursor:default; }
+.cal-week{ display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:2px; }
+.cal-week i{
+  font-style:normal; text-align:center; padding:3px 0 5px;
+  font-family:"Noto Serif SC","Songti SC",serif;
+  font-size:10px; letter-spacing:.08em; color:var(--ink-faint);
+}
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); row-gap:2px; }
+.cal-d{
+  position:relative; aspect-ratio:1/1;
+  border:0; border-radius:50%; background:none;
+  font-family:"Cormorant Garamond", Georgia, serif; font-weight:600;
+  font-size:clamp(12.5px, 3.4vw, 14.5px);
+  color:var(--ink-soft);
+  cursor:pointer; display:grid; place-items:center;
+  transition: background .15s ease;
+}
+.cal-d:active{ background:rgba(150,157,162,.16); }
+.cal-d:disabled{ opacity:.22; cursor:default; }
+.cal-d.sel{ background:#9AA2A8; color:#FBFCFD; }
+.cal-d .dot{
+  position:absolute; left:50%; bottom:8%;
+  width:3px; height:3px; border-radius:50%;
+  transform:translateX(-50%);
+  background:#9AA2A8;
+}
+.cal-d.sel .dot{ background:#FBFCFD; }
+
+/* ── 12 枚月相：轨道环 ── */
+.moons{ position:absolute; inset:0; z-index:4; transform: rotate(var(--ring)); }
+.moon{
+  position:absolute; top:50%; left:50%;
+  width:var(--sz); height:var(--sz);
+  margin: calc(var(--sz) / -2) 0 0 calc(var(--sz) / -2);
+  border:0; padding:0; background:none; cursor:pointer;
+  transform: rotate(var(--a)) translateY(calc(var(--rad) * -1));
+}
+.moon-in{
+  display:grid; place-items:center; width:100%; height:100%;
+  /* 反向抵消：环形旋转 + 自身角度 → 月相朝向与文字永远正向 */
+  transform: rotate(calc(-1 * (var(--a) + var(--ring))));
+}
+.disc{
+  position:absolute; inset:0; border-radius:50%;
+  background-image:url("assets/phases.webp");
+  background-repeat:no-repeat;
+  background-size: calc(var(--sz) * 12) var(--sz);
+  background-position-x: calc(var(--sz) * var(--i));
+  filter: var(--moon-filter);
+  opacity:.9;
+  transition: transform .2s ease, opacity .2s ease;
+}
+.moon:active .disc{ transform:scale(.9); }
+.moon[aria-current="true"] .disc{ opacity:1; filter:none; }
+.cap{
+  position:relative; z-index:2; text-align:center; line-height:1.12;
+  font-family:"Noto Serif SC", serif; font-weight:600;
+  color: var(--ink);
+  text-shadow: 0 1px 3px var(--paper), 0 0 8px var(--paper);
+  pointer-events:none;
+}
+.cap b{ display:block; font-size: clamp(9.5px, 2.7vw, 11px); letter-spacing:.02em; }
+.cap s{ display:block; text-decoration:none; font-size: clamp(7px, 1.9vw, 8px); letter-spacing:.08em; color:var(--ink-soft); margin-top:1px; }
+
+/* 底栏 */
+.tail{ position:relative; z-index:5; margin-top: clamp(12px, 2.5svh, 30px); text-align:center; }
+/* 顶部标题（Somnia 从页脚上移到页首） */
+.mark{
+  font-family:"Pinyon Script", cursive;
+  font-size: clamp(30px, 9vw, 46px); line-height:1;
+  color: var(--ink); margin: 2px 0 12px;
+}
+/* 底部月相槽位背后的星徽（sucai1 白底转透明，不随环转动——它属于“位置”不属于月相） */
+.slot-orn{
+  position:absolute; z-index:2; pointer-events:none;
+  left:50%; top: calc(50% + var(--rad));
+  width: clamp(86px, 24vw, 118px);
+  transform: translate(-50%, -30%);
+  filter: var(--orn-filter);
+  opacity:.5;
+}
+.slot-orn img{ display:block; width:100%; height:auto; }
+/* 底部槽位预览文字：哪枚月相转到正下方，就显示哪条的预览 */
+.preview{
+  width: min(80%, 330px);
+  min-height: 88px;               /* 定高防跳 */
+  margin: 0 auto 10px;
+  text-align:center;
+  transition: opacity .3s ease;
+}
+.preview.swap{ opacity:0; }
+.pv-meta{
+  margin:0; font-family:"Cormorant Garamond", Georgia, serif;
+  font-size:9.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--ink-faint);
+}
+.pv-label{ font-weight:600; font-size:15.5px; letter-spacing:.1em; margin:4px 0 5px; color:var(--ink); }
+.pv-dream{
+  margin:0; font-size:11.8px; line-height:1.85; color:var(--ink-soft);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.tail .tag{
+  font-family:"Cormorant Garamond", Georgia, serif;
+  font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--ink-faint);
+  margin-bottom:12px;
+}
+
+/* ══════════ 滚动行程（档案抽屉已删：hero sticky 常驻，这段隐形区域只提供滚动距离让环转起来） ══════════ */
+.scrollspace{ height: clamp(760px, 135svh, 1100px); pointer-events:none; }
+
+/* ══════════ 详情弹窗（浮在页面中间 · 底图 ditu 星盘） ══════════ */
+.modal{
+  position:fixed; inset:0; z-index:80;
+  display:grid; place-items:center;
+  padding: 22px;
+  pointer-events:none; visibility:hidden;
+}
+.modal.on{ pointer-events:auto; visibility:visible; }
+.mscrim{
+  position:absolute; inset:0; background:rgba(20,24,20,.44);
+  opacity:0; transition:opacity .26s ease;
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+}
+.modal.on .mscrim{ opacity:1; }
+.sheet{
+  position:relative;
+  width:min(86%, 480px); max-height:76svh; overflow-y:auto;
+  /* 星盘底图 + 主题色蒙版：深色透出星图，浅色洗成纸面细纹 */
+  background:
+    linear-gradient(180deg, var(--sheet-veil), var(--sheet-veil)),
+    url("assets/ditu.jpg") center/cover no-repeat;
+  border:1px solid var(--hair-mid);
+  border-radius: 22px;
+  padding: clamp(16px, 4.5vw, 22px) clamp(16px, 5vw, 24px);
+  box-shadow: var(--shadow);
+  transform: translateY(26px) scale(.96);
+  opacity:0;
+  transition: transform .34s cubic-bezier(.22,1,.36,1), opacity .28s ease;
+}
+.modal.on .sheet{ transform:none; opacity:1; }
+/* 隐藏系统滚动条（内容照常滚动，视觉干净） */
+.sheet{ scrollbar-width:none; -ms-overflow-style:none; }
+.sheet::-webkit-scrollbar{ width:0; height:0; display:none; }
+.sheet-head{
+  display:flex; align-items:center; gap:13px;
+  margin-bottom:16px; padding-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.mdisc{
+  flex:none; width:38px; height:38px; border-radius:50%;
+  background-image:url("assets/phases.webp");
+  background-repeat:no-repeat;
+  background-size: calc(38px * 12) 38px;
+  background-position-x: calc(38px * var(--i));
+  filter: var(--moon-filter);
+  box-shadow: 0 0 0 1px var(--hair) inset;
+}
+.sheet-tt{ min-width:0; }
+.dnav{ display:none; align-items:center; gap:9px; margin:7px 0 0; font-family:"Cormorant Garamond", Georgia, serif; font-size:13px; color:var(--ink-soft); }
+.dnav b{ cursor:pointer; padding:0 7px; font-weight:600; color:var(--ink-soft); user-select:none; }
+.dnav b:hover{ color:var(--ink); }
+.dnav span{ letter-spacing:.08em; }
+.sheet h3{
+  margin:0 0 3px; font-size: clamp(15px, 4vw, 16.5px); font-weight:600; letter-spacing:.08em;
+}
+.sheet .meta{
+  font-family:"Cormorant Garamond", Georgia, serif;
+  font-size:11px; letter-spacing:.2em; color:var(--ink-faint);
+  margin:0;
+}
+.body{ font-size: clamp(12.5px, 3.5vw, 14px); line-height:1.9; color:var(--ink); white-space:pre-wrap; }
+.facts{ margin-top:18px; display:flex; flex-direction:column; gap:11px; }
+.fact{ display:grid; grid-template-columns:58px 1fr; gap:10px; align-items:start; }
+.fact i{
+  font-style:normal; font-size:11px; letter-spacing:.14em; color:var(--ink-faint);
+}
+.fact p{ margin:0; font-size:12.8px; line-height:1.85; color:var(--ink-soft); }
+.lucid{ display:flex; align-items:center; gap:8px; }
+.lucid u{ text-decoration:none; flex:1; height:3px; border-radius:9px; background:var(--hair); overflow:hidden; }
+.lucid u b{ display:block; height:100%; background:var(--ink-soft); }
+/* 合上：同款磨砂底（与日期盘一致，不再用白色高光玻璃） */
+.close{
+  margin-top:20px; width:100%; padding:12px; border-radius:999px;
+  border:1px solid var(--hair-mid);
+  background: var(--chip-bg);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  color: var(--ink);
+  font:inherit; font-size:13px; letter-spacing:.16em; cursor:pointer;
+  transition: transform .16s ease;
+}
+.close:active{ transform:scale(.97); }
+
+/* 小屏收一收 */
+@media (max-height:680px){
+  .stage{ width:min(82vw, 350px); --rad: clamp(100px, 30vw, 138px); }
+  .mark{ font-size:30px; }
+  .preview{ min-height:70px; }
+  .pv-dream{ -webkit-line-clamp:1; }
+}
+@media (prefers-reduced-motion: reduce){
+  .core-img{ animation:none; }
+}
+</style>
+</head>
+<body>
+
+<button class="themebtn" id="themeBtn" type="button" aria-label="切换深浅主题">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 14.8A8.2 8.2 0 1 1 9.2 3.8a6.6 6.6 0 0 0 11 11Z"/></svg>
+</button>
+
+<!-- ══════ 星际舞台（sticky：滚到列表时月球不消失） ══════ -->
+<section class="hero" id="hero">
+  <div class="mark">Bygone Dreams</div>
+  <div class="rail"><i></i><b></b><i></i></div>
+  <p class="kicker">Dream Archive · No.01</p>
+
+  <div class="stage" id="stage">
+
+    <!-- 底部槽位背后的星徽（固定在“位置”上，月相转到此处即被它衬着） -->
+    <div class="slot-orn"><img src="assets/orn-sucai.webp" alt=""></div>
+
+    <!-- 日期盘：悬在大月球正上方，选哪天就把那天的月相转到正下方（点击弹自绘日历） -->
+    <div class="date-chip" id="dateChip" role="button" tabindex="0" aria-label="选择日期">
+      <b id="dateText">----.--.--</b>
+    </div>
+    <div class="cal-scrim" id="calScrim"></div>
+    <div class="cal" id="cal" role="dialog" aria-label="日历">
+      <div class="cal-head">
+        <button class="cal-nav" id="calPrev" type="button" aria-label="上个月">‹</button>
+        <b id="calTitle">—</b>
+        <button class="cal-nav" id="calNext" type="button" aria-label="下个月">›</button>
+      </div>
+      <div class="cal-week"><i>一</i><i>二</i><i>三</i><i>四</i><i>五</i><i>六</i><i>日</i></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- 中心月球：CSS 缓慢自转 -->
+    <div class="core">
+      <span class="core-img"></span>
+      <svg class="core-face" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="93" fill="none" stroke="var(--hair)" stroke-width=".7"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--hair)" stroke-width=".5" stroke-dasharray="2 4"/>
+        <circle cx="100" cy="100" r="70" fill="none" stroke="var(--hair)" stroke-width=".5"/>
+        <path d="M100 7V193M7 100H193" stroke="var(--hair)" stroke-width=".4"/>
+      </svg>
+    </div>
+
+    <!-- 12 枚月相（JS 生成） -->
+    <div class="moons" id="moons" role="group" aria-label="十二个月相 · 每个对应一条梦境"></div>
+  </div>
+
+  <div class="tail">
+    <!-- 底部槽位预览：正下方的月相对应的梦境预览文字 -->
+    <div class="preview" id="preview" aria-live="polite">
+      <p class="pv-meta" id="pvMeta">—</p>
+      <div class="pv-label" id="pvLabel">—</div>
+      <p class="pv-dream" id="pvDream">—</p>
+    </div>
+    <div class="rail" style="width:min(62%,270px)"><i></i><b></b><i></i></div>
+    <div class="tag">The moon keeps our dreams</div>
+  </div>
+</section>
+
+<!-- ══════ 滚动行程（隐形，只为让整环随滑动旋转） ══════ -->
+<div class="scrollspace" aria-hidden="true"></div>
+
+<!-- ══════ 详情弹窗 ══════ -->
+<div class="modal" id="modal" aria-hidden="true" role="dialog" aria-label="梦境详情">
+  <div class="mscrim" id="mscrim"></div>
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="mdisc" id="mPhase" style="--i:0" aria-hidden="true"></span>
+      <div class="sheet-tt">
+        <h3 id="mTitle">—</h3>
+        <p class="meta" id="mMeta">—</p>
+        <p class="dnav" id="mSwitch"><b id="dPrev">‹</b><span id="dIdx">1/1</span><b id="dNext">›</b></p>
+      </div>
+    </div>
+    <div class="body" id="mBody">—</div>
+    <div class="facts">
+      <div class="fact"><i>余韵</i><p id="mRes">—</p></div>
+      <div class="fact"><i>觉知</i><p id="mAwa">—</p></div>
+      <div class="fact"><i>清醒度</i><div class="lucid"><u><b id="mLucBar" style="width:0"></b></u><span id="mLuc" style="font-size:11.5px;color:var(--ink-faint)">—</span></div></div>
+    </div>
+    <button class="close" id="mClose" type="button">合 上</button>
+  </div>
+</div>
+
+<!--
+  Bygone Dreams · 月环日历梦境页
+  美化（页面设计/前端实现）：Lydia 原创；二传二改请保留本注明。
+  梦境系统二改自抖音「心潮」（原作者：顾川）。
+-->
+<script>
+/* ══════════════════════════════════════════════════════════
+   数据：优先 fetch 同源 /api/dreams（由 server.example.js 或你的宿主提供）；
+   请求失败时退回下面 3 条纯虚构示例梦（日期相对今天动态生成），保证开箱即见效果。
+   ══════════════════════════════════════════════════════════ */
+const _today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+const _ex = (off, title, preview, luc, dream, residue, awareness) => ({
+  day: new Date(Date.parse(_today) - off * 86400000).toISOString().slice(0, 10),
+  title, label: title, preview, luc, dream, residue, awareness
+});
+/* 以下三条为纯虚构示例梦，仅用于演示页面效果；接入后会自动被真实数据替换 */
+const DREAMS = [
+  _ex(0, "书架", "图书馆的书架高得看不见顶，抽出一本，字迹是自己写过的。", 0.30,
+      "梦里我在一座图书馆，书架高得看不见顶。我抽出一本书，翻开，字迹竟然是我自己写过的。想看清写了什么，字就自己淡下去。管理员说：借走的梦都要还。我说我没借过，她指了指我怀里——抱着一摞没有书名的册子。",
+      "指尖还有纸页的毛边", "知道是梦，但想先把书看完"),
+  _ex(1, "灯塔", "海面退成一条走道，尽头灯塔的光扫过来，照到就不冷了。", 0.15,
+      "海退得很远，露出一条湿漉漉的走道。我沿着它往尽头的灯塔走，每走一步，身后的水面就合拢一次。灯塔的光扫过来的时候，走道忽然变宽了；光扫过去，我又得小跑着追。最后我站在塔底，光从我身上越了过去。",
+      "脸颊上还留着光的温度", "完全沉浸，没意识到是梦"),
+  _ex(2, "站台", "末班站台的时刻表全是空白，广播报的站名都像想去的地方。", 0.05,
+      "末班车的站台空无一人，时刻表上全是空白。广播报站，报出来的却不是地名，是一些我想去的地方。车门开了又关，我一直没上去。车开走以后，站台的灯一盏一盏灭，最后只剩时刻表亮着。",
+      "耳朵里还有广播的回声", "完全当成真的")
+];
+
+/* ══════════════════════════════════════════════════════════
+   一、复用罗盘那套：3D 环臂 + 环上文字（缓慢不间断自转）
+   armRing / textOnRing3d 与 index.html 里浑天仪罗盘同源
+   ══════════════════════════════════════════════════════════ */
+const stage = document.getElementById("stage");
+/* 环上文字不再循环同一句：
+   外环 = 12 条梦境各自的名字（直接从数据生成，格子永不重复，和月相一一对应）
+   内环 = 一整句不重复的英文，绕一圈刚好说完 */
+const TEXTS = {
+  RING1: DREAMS.map((d) => d.label).join(" ✦ ") + " ✦ ",
+  RING2: "✦ EVERY NIGHT WE MEET WHERE THE TIDE KEEPS WHAT DAYLIGHT FORGETS ✦ "
+};
+/* 直径倍率做过复算：月相环半径约占 stage 的 0.38~0.46，
+   环臂取 0.98~1.32 刚好在它外围层层铺开，最大 1.32 只溢出舞台边缘一点（参考图也是让线出血的）。
+   再大就会出现大片被裁的碎弧。 */
+const ARMS = [
+  [1.16,  68,   5,   0,  14, .30, 1.4],
+  [1.06, -22,  70,  28, -11, .26, 1.2],
+  [1.24,  52, -38,  62,  16, .22, 1.0],
+  [0.98, -58,  22,  78, -18, .16, 0.9],
+  [1.32,  38,  52, -12,   9, .20, 0.8]
+];
+/* 文字环要比环臂靠内（1.10 / 1.02），否则字会跑到画面外被切 */
+const RINGS = [
+  ["RING1", 1.10,  68,  5,  0,  14, .40],
+  ["RING2", 1.02, -22, 70, 28, -11, .30]
+];
+let SIZE = 400, C = 200, armEls = [], ringEls = [], elapsed = 0;
+
+/* 外环文字 = 当前窗口里 12 条梦的标题（数据生成，永不重复）；内环用固定句 */
+function ringStringFor(key){
+  if (key !== "RING1") return TEXTS[key];
+  if (!slotD.length) return TEXTS[key];
+  return slotD.map((v) => {
+    const day = shiftDay(todayStr, v);
+    const d = byDay.get(day);
+    if (d) return d.title || d.label;
+    return day === todoDay ? "待记" : "×";
+  }).join(" ✦ ") + " ✦ ";
+}
+function ringCharsHTML(key, chars, r, c, fs, op){
+  return chars.map((ch, i) => {
+    const a = (i / chars.length) * 360;
+    return `<span class="${key === "RING1" ? "tx-out" : "tx-in"}"
+      style="left:${c}px;top:${c}px;transform:rotate(${a}deg) translateY(${-r}px);transform-origin:0 0;
+             font-size:${fs.toFixed(1)}px;opacity:${op}">${ch === " " ? "&nbsp;" : ch}</span>`;
+  }).join("");
+}
+/* 窗口平移 / 数据更新后，只重建外环文字（内环不动） */
+function refreshRing1(){
+  const wrap = stage.querySelector('.ringtx[data-key="RING1"]');
+  if (!wrap) return;
+  const r = parseFloat(wrap.dataset.r), op = parseFloat(wrap.dataset.op);
+  const chars = ringStringFor("RING1").split("");
+  const arc = (2 * Math.PI * r) / chars.length;
+  const fs = Math.max(9, Math.min(26, arc * 0.72));
+  wrap.innerHTML = ringCharsHTML("RING1", chars, r, C, fs, op);
+}
+
+function buildOrbits(size){
+  SIZE = size; C = size / 2;
+  const frag = document.createDocumentFragment();
+  ARMS.forEach(([dm, rx, ry, rz, sp, op, sw], i) => {
+    const d = SIZE * dm;
+    const wrap = document.createElement("div");
+    wrap.className = "arm";
+    wrap.dataset.rx = rx; wrap.dataset.ry = ry; wrap.dataset.rz = rz; wrap.dataset.sp = sp;
+    wrap.style.cssText = `width:${d}px;height:${d}px;margin-top:${-d/2}px;margin-left:${-d/2}px`;
+    wrap.innerHTML = `<svg width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
+      <circle cx="${d/2}" cy="${d/2}" r="${d/2-2}" fill="none" stroke="var(--hair)" stroke-opacity="${op}" stroke-width="${sw}"/></svg>`;
+    frag.appendChild(wrap);
+  });
+  RINGS.forEach(([key, dm, rx, ry, rz, sp, op]) => {
+    const d = SIZE * dm, r = d / 2 - 4;
+    const chars = ringStringFor(key).split("");
+    /* 字号按弧长自适应：中文字宽 ≈ 1em，取 0.72×弧长 → 字与字留 ~28% 空隙。
+       写死字号时，字数少的环会稀得像断线，字数多的会挤成一团。 */
+    const arc = (2 * Math.PI * r) / chars.length;
+    const fs = Math.max(9, Math.min(26, arc * 0.72));
+    const wrap = document.createElement("div");
+    wrap.className = "ringtx";
+    wrap.dataset.key = key; wrap.dataset.r = r; wrap.dataset.op = op;
+    wrap.dataset.rx = rx; wrap.dataset.ry = ry; wrap.dataset.rz = rz; wrap.dataset.sp = sp;
+    wrap.style.cssText = `width:${d}px;height:${d}px;margin-top:${-d/2}px;margin-left:${-d/2}px`;
+    wrap.innerHTML = ringCharsHTML(key, chars, r, C, fs, op);
+    frag.appendChild(wrap);
+  });
+  stage.insertBefore(frag, stage.firstChild);
+  armEls = Array.prototype.slice.call(stage.querySelectorAll(".arm"));
+  ringEls = Array.prototype.slice.call(stage.querySelectorAll(".ringtx"));
+}
+
+/* ══════════════════════════════════════════════════════════
+   二、12 枚月相排到环形轨道上
+   ══════════════════════════════════════════════════════════ */
+const moonsBox = document.getElementById("moons");
+/* 12 枚实体月相 = 一本 12 天的「日历轮」：
+   一格 = 一天（日期顺时针排布）。正下方 = 今天；右侧往上一天天更旧；
+   左侧往上 = 明天(待记) + 更远的未来（×，没梦的空白日）。
+   滚动只是翻日历：格子里的日期随公式连续滑动，顶部那条“未来→过去”的缝合线永远藏在隐身区。 */
+const todayStr = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);   /* 东八区今天 */
+let ALL = DREAMS.slice();
+ALL.forEach((d) => { d.day = normalizeDay(d.day); });                            /* 兜底 "09.12" → ISO */
+let byDay = new Map();                            /* 日期 → 当天最新的一条梦 */
+let lastDay = shiftDay(todayStr, -1);             /* 最近有梦的一天（默认昨天，避免空态） */
+let todoDay = shiftDay(todayStr, 0);              /* 待记 = 最近有梦的第二天 */
+let slotD = [];                                   /* 每枚月相当前承载的日期偏移（相对今天） */
+let moonEls = [];
+const STEP = 30;                                  /* 12 枚 × 30° */
+function shortDay(day){
+  const p = String(day || "").split("-");
+  return p.length === 3 ? p[1] + "." + p[2] : day;
+}
+function normalizeDay(d){
+  const s = String(d || "");
+  const m = s.match(/^(\d{2})\.(\d{2})$/);
+  return m ? todayStr.slice(0, 4) + "-" + m[1] + "-" + m[2] : s;
+}
+function shiftDay(day, n){                         /* ISO 日期 ± n 天 */
+  return new Date(Date.parse(day + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
+}
+function dayOff(day){                              /* 日期相对今天的天数（负 = 过去） */
+  return Math.round((Date.parse(day + "T00:00:00Z") - Date.parse(todayStr + "T00:00:00Z")) / 86400000);
+}
+function slotOff(i, r){                            /* 展开环角 r 下 i 号槽承载的日期偏移 */
+  const k = Math.round(r / 30);                    /* 当天距“今天”的整数天数（负=过去） */
+  const m = (((k - i) % 12) + 12) % 12;            /* 该槽距正下方的顺时针格数 */
+  return -k + m - (m >= 6 ? 12 : 0);               /* m≥6 越过顶部缝合线 → 回到更旧的一天 */
+}
+function applySlot(i){
+  const el = moonEls[i]; if (!el) return;
+  const day = shiftDay(todayStr, slotD[i]);
+  const d = byDay.get(day) || null;
+  el._dream = d;
+  const todo = (day === todoDay);
+  const cap = el.querySelector(".cap");
+  cap.querySelector("b").textContent = d ? (d.title || d.label) : (todo ? "待记" : "×");
+  cap.querySelector("s").textContent = d ? shortDay(d.day) : "";
+  el.setAttribute("aria-label", d ? `${d.day} ${d.title || d.label}` : (todo ? "待记录" : "无梦之日"));
+}
+function buildMoons(){
+  moonsBox.innerHTML = Array.from({ length: 12 }, (_, i) => `
+    <button class="moon" type="button" style="--a:${180 - i * STEP}deg;--i:${-i}" data-i="${i}" aria-label="月相 ${i + 1}">
+      <span class="moon-in">
+        <span class="disc"></span>
+        <span class="cap"><b>—</b><s></s></span>
+      </span>
+    </button>`).join("");
+  moonEls = Array.prototype.slice.call(moonsBox.querySelectorAll(".moon"));
+  const r0 = (window.scrollY || 0) * 0.42;
+  slotD = moonEls.map((_, i) => slotOff(i, r0));
+  moonEls.forEach((_, i) => applySlot(i));
+  refreshRing1();
+  syncRing();                                     /* 建好立刻算一遍渐隐 */
+}
+function refreshFlow(){                           /* 数据到位/更新：重建日期→梦映射并刷新槽位 */
+  byDay = new Map();
+  ALL.forEach((d) => { if (d.day && !byDay.has(d.day)) byDay.set(d.day, d); });
+  lastDay = ALL.length ? ALL[0].day : shiftDay(todayStr, -1);
+  todoDay = shiftDay(lastDay, 1);
+  const r0 = (window.scrollY || 0) * 0.42;
+  slotD = moonEls.map((_, i) => slotOff(i, r0));
+  moonEls.forEach((_, i) => applySlot(i));
+  refreshRing1();
+  syncRing();
+}
+
+/* ══════════════════════════════════════════════════════════
+   三、滚动 → 整环旋转 + 位置渐隐 + 底部槽位预览
+   世界角 = 自身角(·30°) + 环角(scrollY·0.42)
+   渐隐：顶部(0°)全隐 → 底部(180°)全显，按 cos 过渡，天然平滑
+   ══════════════════════════════════════════════════════════ */
+let scrollTick = false;
+function syncRing(){
+  scrollTick = false;
+  const y = window.scrollY || window.pageYOffset || 0;
+  const ring = y * 0.42;
+  stage.style.setProperty("--ring", ring.toFixed(2) + "deg");
+  let best = 0, bestDiff = 1e9, recycled = false;
+  for (let i = 0; i < moonEls.length; i++){
+    const v = slotOff(i, ring);
+    if (v !== slotD[i]){ slotD[i] = v; applySlot(i); recycled = true; }   /* 顶部隐身区换日 */
+    const deg = 180 - i * STEP + ring;      /* 该月相此刻的真实世界角 */
+    const el = moonEls[i];
+    const op = (1 - Math.cos(deg * Math.PI / 180)) / 2;
+    el.style.opacity = op.toFixed(3);
+    el.style.pointerEvents = op < 0.16 ? "none" : "";
+    let diff = Math.abs(((deg % 360) + 360) % 360 - 180);   /* 距正下方槽位的角距 */
+    if (diff < bestDiff){ bestDiff = diff; best = i; }
+  }
+  if (recycled) refreshRing1();
+  for (let i = 0; i < moonEls.length; i++){
+    if (i === best) moonEls[i].setAttribute("aria-current", "true");
+    else moonEls[i].removeAttribute("aria-current");
+  }
+  setActive(best);
+}
+
+/* 底部槽位预览文字：先淡出 → 换字 → 淡入，不生硬 */
+const preview = document.getElementById("preview");
+let activeIdx = -1, swapTimer = 0;
+function setActive(k){
+  if (k === activeIdx) return;
+  activeIdx = k;
+  preview.classList.add("swap");
+  clearTimeout(swapTimer);
+  swapTimer = setTimeout(() => {
+    const day = shiftDay(todayStr, slotD[k]);
+    const d = byDay.get(day) || null;
+    if (!d){
+      const todo = (day === todoDay);
+      document.getElementById("pvMeta").textContent = day;
+      document.getElementById("pvLabel").textContent = todo ? "待记" : "×";
+      document.getElementById("pvDream").textContent = todo ? "今晚的梦，要睡着之后才会落下。" : "这一天没有留下梦。";
+    } else {
+      document.getElementById("pvMeta").textContent =
+        `${shortDay(d.day)} · LUCIDITY ${Math.round((d.luc || 0) * 100)}%`;
+      document.getElementById("pvLabel").textContent = d.title || d.label;
+      document.getElementById("pvDream").textContent = d.preview || d.dream;
+    }
+    preview.classList.remove("swap");
+  }, 180);
+}
+addEventListener("scroll", () => {
+  if (scrollTick) return;
+  scrollTick = true;
+  requestAnimationFrame(syncRing);
+}, { passive:true });
+
+/* ══════════════════════════════════════════════════════════
+   四、动画帧：环臂 / 环文字自转（不可见即停，省电）
+   ══════════════════════════════════════════════════════════ */
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let t0 = performance.now(), raf = 0, running = false;
+function frame(now){
+  elapsed = (now - t0) / 1000;
+  const all = armEls.concat(ringEls);
+  for (let i = 0; i < all.length; i++){
+    const n = all[i], rx = +n.dataset.rx, ry = +n.dataset.ry, rz = +n.dataset.rz, sp = +n.dataset.sp;
+    const e = elapsed * sp;
+    n.style.transform = `rotateX(${rx + e}deg) rotateY(${ry + e * 0.5}deg) rotateZ(${rz}deg)`;
+  }
+  raf = requestAnimationFrame(frame);
+}
+function startAnim(){
+  if (running || reduce) return;
+  running = true; t0 = performance.now(); raf = requestAnimationFrame(frame);
+}
+function stopAnim(){ running = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+
+/* ══════════════════════════════════════════════════════════
+   五、弹窗 / 主题
+   ══════════════════════════════════════════════════════════ */
+const $ = (id) => document.getElementById(id);
+const modal = $("modal");
+let dayList = [], dayPtr = 0;
+function openDream(d, slot){
+  if (!d) return;
+  dayList = ALL.filter((x) => x.day === d.day);     /* 当天全部梦（新→旧） */
+  dayPtr = Math.max(0, dayList.indexOf(d));
+  $("mPhase").style.setProperty("--i", -(slot || 0));
+  paintDream();
+  modal.classList.add("on");
+  modal.setAttribute("aria-hidden", "false");
+}
+function paintDream(){
+  const d = dayList[dayPtr]; if (!d) return;
+  $("mTitle").textContent = d.title || d.label;
+  $("mMeta").textContent = `${d.day} · LUNAR RECORD`;
+  $("mBody").textContent = d.dream;
+  $("mRes").textContent = d.residue || "—";
+  $("mAwa").textContent = d.awareness || "—";
+  const pct = Math.round((d.luc || 0) * 100);
+  $("mLucBar").style.width = pct + "%";
+  $("mLuc").textContent = (d.luc * 100).toFixed(0) + "%";
+  const sw = $("mSwitch");
+  if (dayList.length > 1){
+    sw.style.display = "flex";
+    $("dIdx").textContent = (dayPtr + 1) + "/" + dayList.length;
+  } else sw.style.display = "none";
+}
+$("dPrev").addEventListener("click", () => { dayPtr = (dayPtr - 1 + dayList.length) % dayList.length; paintDream(); });
+$("dNext").addEventListener("click", () => { dayPtr = (dayPtr + 1) % dayList.length; paintDream(); });
+function closeDream(){
+  modal.classList.remove("on");
+  modal.setAttribute("aria-hidden", "true");
+}
+moonsBox.addEventListener("click", (e) => {
+  const b = e.target.closest(".moon"); if (b) openDream(b._dream, +b.dataset.i);
+});
+$("mClose").addEventListener("click", closeDream);
+$("mscrim").addEventListener("click", closeDream);
+addEventListener("keydown", (e) => { if (e.key === "Escape") closeDream(); });
+
+$("themeBtn").addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try{ localStorage.setItem("mg_theme", next); }catch(_){}
+});
+
+/* ══════════════════════════════════════════════════════════
+   五点五、日期盘：选哪天，那天的月相转到正下方（12 天之前的也找得到）
+   （假滚动 = rAF 补间 window.scrollTo，环角公式与手动滚动完全一致）
+   ══════════════════════════════════════════════════════════ */
+const dateText = $("dateText");
+const cal = $("cal"), calScrim = $("calScrim"), calGrid = $("calGrid"),
+      calTitle = $("calTitle"), calPrev = $("calPrev"), calNext = $("calNext");
+let twRaf = 0, twFrom = 0, twTo = 0, twStart = 0, twDur = 1200;
+function rotateToDay(off){                          /* 把“今天 + off 天”转到正下方 */
+  const cur = window.scrollY || window.pageYOffset || 0;
+  const delta = -30 * off - cur * 0.42;             /* 线性日期：环角直接决定当天，无需取模 */
+  const to = cur + delta / 0.42;
+  cancelAnimationFrame(twRaf);
+  if (reduce){ window.scrollTo(0, to); return; }
+  twFrom = cur; twTo = to; twStart = performance.now();
+  twDur = Math.max(600, Math.min(1800, Math.abs(delta) * 2.2));
+  const step = (now) => {
+    const t = Math.min(1, (now - twStart) / twDur);
+    const e = t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;   /* easeInOutCubic */
+    window.scrollTo(0, twFrom + (twTo - twFrom) * e);
+    if (t < 1) twRaf = requestAnimationFrame(step);
+  };
+  twRaf = requestAnimationFrame(step);
+}
+/* 手动滚动立即接管，停掉补间 */
+["wheel","touchstart"].forEach((ev) =>
+  addEventListener(ev, () => cancelAnimationFrame(twRaf), { passive:true }));
+
+function applyDate(v){
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+  selDay = v;
+  dateText.textContent = v.replace(/-/g, ".");
+  rotateToDay(dayOff(v));
+}
+
+/* ── 自绘日历：星盘底图 + Cormorant 数字 + 宋体年月；
+   有梦的日子点圆点，早于最早梦境 / 晚于今天的日期不可选 ── */
+let calY = 0, calM = 0;                 /* 日历视图所在年月（calM: 0-11） */
+let MIN_DAY = todayStr, MAX_DAY = todayStr, selDay = todayStr;
+const pad2 = (n) => String(n).padStart(2, "0");
+function openCal(){
+  const d = selDay || todayStr;
+  calY = +d.slice(0, 4); calM = +d.slice(5, 7) - 1;
+  renderCal();
+  cal.classList.add("on"); calScrim.classList.add("on");
+}
+function closeCal(){ cal.classList.remove("on"); calScrim.classList.remove("on"); }
+function renderCal(){
+  calTitle.textContent = `${calY} 年 ${calM + 1} 月`;
+  const lead = (new Date(calY, calM, 1).getDay() + 6) % 7;      /* 周一为首 */
+  const days = new Date(calY, calM + 1, 0).getDate();
+  const dots = new Set(ALL.map((d) => d.day));
+  let html = "";
+  for (let i = 0; i < lead; i++) html += "<span></span>";
+  for (let n = 1; n <= days; n++){
+    const key = `${calY}-${pad2(calM + 1)}-${pad2(n)}`;
+    const dis = key < MIN_DAY || key > MAX_DAY;
+    const dot = dots.has(key) ? '<s class="dot"></s>' : "";
+    html += `<button class="cal-d${key === selDay ? " sel" : ""}" type="button" data-day="${key}"${dis ? " disabled" : ""}>${n}${dot}</button>`;
+  }
+  calGrid.innerHTML = html;
+  calPrev.disabled = `${calY}-${pad2(calM + 1)}` <= MIN_DAY.slice(0, 7);
+  calNext.disabled = `${calY}-${pad2(calM + 1)}` >= MAX_DAY.slice(0, 7);
+}
+$("dateChip").addEventListener("click", () => cal.classList.contains("on") ? closeCal() : openCal());
+calScrim.addEventListener("click", closeCal);
+addEventListener("keydown", (e) => { if (e.key === "Escape") closeCal(); });
+calPrev.addEventListener("click", () => { calM--; if (calM < 0){ calM = 11; calY--; } renderCal(); });
+calNext.addEventListener("click", () => { calM++; if (calM > 11){ calM = 0; calY++; } renderCal(); });
+calGrid.addEventListener("click", (e) => {
+  const b = e.target.closest(".cal-d");
+  if (!b || b.disabled) return;
+  applyDate(b.dataset.day);
+  closeCal();
+});
+
+function initDate(){
+  selDay = todayStr;
+  MIN_DAY = ALL.length ? ALL[ALL.length - 1].day : todayStr;
+  MAX_DAY = todayStr;
+  dateText.textContent = todayStr.replace(/-/g, ".");
+}
+
+/* 拉全量梦境（dev-server 的 /api 代理自带 basicAuth；失败则退回内置 12 条） */
+fetch("/api/dreams").then((r) => r.ok ? r.json() : Promise.reject(0)).then((j) => {
+  const list = (j.dreams || []).filter((x) => x && x.dream).map((x) => ({
+    day: x.day || "",
+    title: String(x.title || "").trim().slice(0, 6),
+    preview: String(x.preview || "").trim().slice(0, 60),
+    label: (x.dream || "").replace(/\s+/g, "").slice(0, 4) || "梦",
+    luc: Number(x.lucidity) || 0,
+    dream: x.dream || "",
+    residue: x.residue || "",
+    awareness: x.awareness || ""
+  }));
+  list.sort((a, b) => String(b.day).localeCompare(String(a.day)));
+  if (!list.length) return;
+  ALL = list;
+  refreshFlow();
+  MIN_DAY = ALL[ALL.length - 1].day;
+  selDay = todayStr;
+  dateText.textContent = todayStr.replace(/-/g, ".");
+}).catch(() => {});
+
+/* ══════════════════════════════════════════════════════════
+   六、启动 / 响应式重建 / 可见性
+   ══════════════════════════════════════════════════════════ */
+function rebuild(){
+  const rect = stage.getBoundingClientRect();
+  buildOrbits(Math.round(rect.width || 360));
+}
+buildMoons();
+refreshFlow();      /* 启动即用内置 DREAMS 填充（离线/file:// 打开时 fetch 会失败，不能等它） */
+rebuild();
+syncRing();
+initDate();
+
+let rz2 = 0;
+addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(rebuild, 180); });
+
+/* 舞台滚出视口就停动画 */
+if ("IntersectionObserver" in window){
+  new IntersectionObserver((es) => {
+    es.forEach((en) => { en.isIntersecting ? startAnim() : stopAnim(); });
+  }, { threshold: 0 }).observe(stage);
+} else {
+  startAnim();
+}
+</script>
+</body>
+</html>

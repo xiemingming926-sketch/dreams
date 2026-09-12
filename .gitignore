@@ -1,0 +1,5 @@
+data/
+corpus/
+node_modules/
+*.log
+.env
