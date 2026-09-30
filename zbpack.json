@@ -1,0 +1,4 @@
+{
+  "build_type": "nodejs",
+  "start_command": "node index.js"
+}
